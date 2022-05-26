@@ -66,9 +66,11 @@ int hashf(string key)
 class ScopeTable
 {
 public:
-    int id;
+    static int tableCount;
+    string id;
     SymbolInfo *hashTable[TABLE_SIZE];
-    ScopeTable *parentScope; // for maintaining parent is like prev link
+    ScopeTable *child; // for maintaining child is like next link
+    ScopeTable *parent; // for maintaining parent is like prev link
 
     ScopeTable()
     {
@@ -76,13 +78,16 @@ public:
         {
             hashTable[i] = NULL;
         }
+        child = NULL;
+        parent = NULL;
+        id = to_string(++tableCount);
     }
 
     bool insert(SymbolInfo *symbolInfo)
     {
         string key = symbolInfo->getName();
         int index = hashf(key);
-        cout<<"# index = "<<index<<endl;
+        // cout<<"# index = "<<index<<endl;
 
         if(hashTable[index] == NULL) 
         {
@@ -173,6 +178,7 @@ public:
 
     void print()
     {
+        cout<<"# table id = "<< id <<endl;
         for(int i=0; i<TABLE_SIZE; i++)
         {
             if (hashTable[i] == NULL)
@@ -199,14 +205,66 @@ public:
     // pass
 };
 
-// linked list of multiple ScopeTable
+int ScopeTable::tableCount = 0;
+
+// linked list of multiple ScopeTable // make it doubly linked list
 class SymbolTable
 {
+public:
+    ScopeTable *head;
+
+    SymbolTable()
+    {
+        head = NULL;
+    }
+
+    void append(ScopeTable *newNode)
+    {
+        if(head == NULL)
+        {
+            head = newNode;
+            return;
+        }
+
+        ScopeTable *cursor;
+        cursor = head;
+        while (cursor->child != NULL)
+        {
+            cursor = cursor->child;
+        }
+        cursor->child = newNode;
+        newNode->parent = cursor;
+    }
+
+    void printCurrentScopeTable()
+    {
+        // pass
+    }
+
+    void printAllScopeTable()
+    {
+        if(head == NULL)
+        {
+            return;
+        }
+
+        ScopeTable *cursor;
+        cursor = head;
+        while (cursor != NULL)
+        {
+            cursor->print();
+            cursor = cursor->child;
+        }
+        // pass
+    }
     // pass
 };
 
 int main()
 {
+    // =======================================================
+    // ===================== READ FILE =======================
+    // =======================================================
 
 // reading from file
 /*     fstream fin;
@@ -230,6 +288,12 @@ int main()
     fin.close();
     cout<<endl; */
 
+    // =======================================================
+    // ========================== TEST =======================
+    // =======================================================
+
+/* 
+
     // cout<<hashf("int")<<endl;
     // cout<<hashf("float")<<endl;
     // cout<<hashf("main")<<endl;
@@ -239,6 +303,8 @@ int main()
     // cout<<hashf("*")<<endl;
     // cout<<hashf("return")<<endl;
 
+    ScopeTable scopeTable1;
+    scopeTable1.print();
 
     SymbolInfo s1("int", "KEYWORD");
     SymbolInfo s2("float", "KEYWORD");
@@ -250,33 +316,79 @@ int main()
     SymbolInfo s8("--", "OPERATOR");
     SymbolInfo s9("&&", "OPERATOR");
     SymbolInfo s10("int", "IDENTIFIER");
+
+    scopeTable1.insert(&s1);
+    scopeTable1.insert(&s2);
+    scopeTable1.insert(&s3);
+    scopeTable1.insert(&s4);
+    scopeTable1.insert(&s5);
+    scopeTable1.insert(&s6);
+    scopeTable1.insert(&s7);
+    scopeTable1.insert(&s8);
+    scopeTable1.insert(&s9);
+    scopeTable1.insert(&s10);
+
+    scopeTable1.print();
+
+    cout<<scopeTable1.lookup("||")<<endl;
+    cout<<scopeTable1.lookup("int")<<endl;
+    cout<<scopeTable1.lookup("++")<<endl;
+
+    scopeTable1.remove("&&");
+    scopeTable1.remove("int");
+    scopeTable1.remove("++");
+    scopeTable1.remove("n");
+
+    scopeTable1.print();
+
+    cout<<endl<<endl;
+
+
+    SymbolInfo t1("double", "KEYWORD");
+    SymbolInfo t2("long", "KEYWORD");
+    SymbolInfo t3("unisigned", "FUNCTION");
+    SymbolInfo t4("x", "IDENTIFIER");
+    SymbolInfo t5("count", "IDENTIFIER");
+    SymbolInfo t6("int", "KEYWORD");
+    SymbolInfo t7("*", "OPERATOR");
+    SymbolInfo t8(">>", "OPERATOR");
+    SymbolInfo t9("&&", "OPERATOR");
+    SymbolInfo t10("int", "IDENTIFIER");
     
-    ScopeTable scopeTable;
-    scopeTable.print();
+    ScopeTable scopeTable2;
+    scopeTable2.print();
 
-    scopeTable.insert(&s1);
-    scopeTable.insert(&s2);
-    scopeTable.insert(&s3);
-    scopeTable.insert(&s4);
-    scopeTable.insert(&s5);
-    scopeTable.insert(&s6);
-    scopeTable.insert(&s7);
-    scopeTable.insert(&s8);
-    scopeTable.insert(&s9);
-    scopeTable.insert(&s10);
+    scopeTable2.insert(&t1);
+    scopeTable2.insert(&t2);
+    scopeTable2.insert(&t3);
+    scopeTable2.insert(&t4);
+    scopeTable2.insert(&t5);
+    scopeTable2.insert(&t6);
+    scopeTable2.insert(&t7);
+    scopeTable2.insert(&t8);
+    scopeTable2.insert(&t9);
+    scopeTable2.insert(&t10);
 
-    scopeTable.print();
+    scopeTable2.print();
 
-    cout<<scopeTable.lookup("||")<<endl;
-    cout<<scopeTable.lookup("int")<<endl;
-    cout<<scopeTable.lookup("++")<<endl;
+    cout<<scopeTable2.lookup("||")<<endl;
+    cout<<scopeTable2.lookup("int")<<endl;
+    cout<<scopeTable2.lookup("++")<<endl;
 
-    scopeTable.remove("&&");
-    scopeTable.remove("int");
-    scopeTable.remove("++");
-    scopeTable.remove("n");
+    scopeTable2.remove("&&");
+    scopeTable2.remove("int");
+    scopeTable2.remove("++");
+    scopeTable2.remove("n");
 
-    scopeTable.print();
+    scopeTable2.print();
+
+    cout<<endl<<endl;
+
+
+    SymbolTable symbolTable;
+    symbolTable.append(&scopeTable1);
+    symbolTable.append(&scopeTable2);
+    symbolTable.printAllScopeTable(); */
 
     // =======================================================
     // ========================== MENU =======================
@@ -287,6 +399,16 @@ int main()
 
     int m; // bucket size
     // cin>>m;
+
+    SymbolInfo *symbolInfo = NULL;
+    ScopeTable *scopeTable = NULL;
+    SymbolTable *symbolTable = NULL;
+
+    scopeTable = new ScopeTable();
+    symbolTable = new SymbolTable();
+    
+    symbolTable->append(scopeTable);
+
     while(getline(cin, text))
     {
         LineParser<string> parser(text, ' ');
@@ -307,14 +429,28 @@ int main()
         switch (choice)
         {
         case I: // ascii value of I, insert
-            cout<<"# Insert" <<endl;
+        {
+            // cout<<"# Insert" <<endl;
+            string name = words.at(1);
+            string type = words.at(2);
+
+            // cout<<"# name = "<< name <<endl;
+            // cout<<"# type = "<< type <<endl;
+            symbolInfo = new SymbolInfo(name, type);
+            scopeTable->insert(symbolInfo);
             // pass
             break;
+        }
         
         case L: // ascii value of L, lookup
+        {
+
             cout<<"# Lookup" <<endl;
+            string name;
+            cin>>name;
             // pass
             break;
+        }
         
         case D: // ascii value of D, delete
             cout<<"# Delete" <<endl;
@@ -322,9 +458,22 @@ int main()
             break;
         
         case P: // ascii value of P, print symbol table
+        {
+
             cout<<"# Print" <<endl;
+            string instruction = words.at(1);
+            if (instruction.compare("A") == 0)
+            {
+                symbolTable->printAllScopeTable();
+            }
+            else if (instruction.compare("C") == 0)
+            {
+                symbolTable->printCurrentScopeTable(); // yet to be implemented
+            }
+            
             // pass
             break;
+        }
         
         case S: // ascii value of S, entering new scope
             cout<<"# New Scope" <<endl;
