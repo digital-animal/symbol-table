@@ -22,3 +22,8 @@ int to_ascii(string text)
     }
     return sum;
 }
+
+int hashf(string key, int m)
+{
+    return to_ascii(key) % m;
+}
