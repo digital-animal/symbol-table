@@ -100,23 +100,74 @@ public:
             cursor->next = symbolInfo;
             
         }
-        
-
-        // symbolInfo->next = hashTable[index];
-        // hashTable[index] = symbolInfo;
 
         return true;
     }
 
     SymbolInfo *lookup(string name)
     {
+        int index = hashf(name);
+
+        if(hashTable[index] == NULL) 
+        {
+            cout<< name <<" not found" <<endl;
+            return NULL;
+        }
+
+        SymbolInfo *cursor; 
+        cursor = hashTable[index]; 
+        while (cursor != NULL)
+        {
+            string currentName = cursor->getName();
+            if(currentName.compare(name) == 0)
+            {
+                cout<< name << " found" <<endl;
+                return cursor;
+            }
+            cursor = cursor->next;
+        }
+        
         // pass
         return NULL;
     }
 
     bool remove(string name)
     {
-        // pass
+        int index = hashf(name);
+
+        if(hashTable[index] == NULL) 
+        {
+            return false;
+        }
+
+        // for matching of 1st node
+        SymbolInfo *cursor; 
+        cursor = hashTable[index];
+        string cursorName = cursor->getName();
+        if(cursorName.compare(name) == 0)
+        {
+            hashTable[index] = cursor->next;
+            cursor = NULL;
+            return true;
+        }
+
+        SymbolInfo *current, *prev; 
+        current = hashTable[index];
+        prev = hashTable[index]; 
+        while (current->next != NULL)
+        {
+            prev = current;
+            current = current->next;
+
+            string currentName = current->getName();
+            if(currentName.compare(name) == 0)
+            {
+                prev->next = current->next;
+                current->next = NULL;
+                return true;
+            }
+        }
+
         return true;
     }
 
@@ -130,13 +181,13 @@ public:
             }
             else
             {
-                // printf("\t%i\t%s\n",i, hash_table[i]->name);
                 printf("\t%i\t",i);
                 SymbolInfo *cursor = hashTable[i];
                 while (cursor != NULL)
                 {
                     string name = cursor->getName(); 
-                    printf("%s - ", name.c_str());
+                    string type = cursor->getType(); 
+                    printf("<%s,%s>  ", name.c_str(), type.c_str());
                     cursor = cursor->next;
                 }
                 printf("\n");   
@@ -179,14 +230,15 @@ int main()
     fin.close();
     cout<<endl; */
 
-    cout<<hashf("int")<<endl;
-    cout<<hashf("float")<<endl;
-    cout<<hashf("main")<<endl;
-    cout<<hashf("printf")<<endl;
-    cout<<hashf("++")<<endl;
-    cout<<hashf("+")<<endl;
-    cout<<hashf("*")<<endl;
-    cout<<hashf("return")<<endl;
+    // cout<<hashf("int")<<endl;
+    // cout<<hashf("float")<<endl;
+    // cout<<hashf("main")<<endl;
+    // cout<<hashf("printf")<<endl;
+    // cout<<hashf("++")<<endl;
+    // cout<<hashf("+")<<endl;
+    // cout<<hashf("*")<<endl;
+    // cout<<hashf("return")<<endl;
+
 
     SymbolInfo s1("int", "KEYWORD");
     SymbolInfo s2("float", "KEYWORD");
@@ -194,17 +246,37 @@ int main()
     SymbolInfo s4("n", "IDENTIFIER");
     SymbolInfo s5("sum", "IDENTIFIER");
     SymbolInfo s6("int", "KEYWORD");
-
+    SymbolInfo s7("++", "OPERATOR");
+    SymbolInfo s8("--", "OPERATOR");
+    SymbolInfo s9("&&", "OPERATOR");
+    SymbolInfo s10("int", "IDENTIFIER");
+    
     ScopeTable scopeTable;
+    scopeTable.print();
+
     scopeTable.insert(&s1);
     scopeTable.insert(&s2);
     scopeTable.insert(&s3);
     scopeTable.insert(&s4);
     scopeTable.insert(&s5);
     scopeTable.insert(&s6);
+    scopeTable.insert(&s7);
+    scopeTable.insert(&s8);
+    scopeTable.insert(&s9);
+    scopeTable.insert(&s10);
 
     scopeTable.print();
 
+    cout<<scopeTable.lookup("||")<<endl;
+    cout<<scopeTable.lookup("int")<<endl;
+    cout<<scopeTable.lookup("++")<<endl;
+
+    scopeTable.remove("&&");
+    scopeTable.remove("int");
+    scopeTable.remove("++");
+    scopeTable.remove("n");
+
+    scopeTable.print();
 
     // =======================================================
     // ========================== MENU =======================
