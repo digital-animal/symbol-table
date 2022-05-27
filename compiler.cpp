@@ -393,7 +393,6 @@ void cosoleInputOutput()
         auto words = parser.parseLineToString();
         choice = to_ascii(words.front());
 
-
         switch (choice)
         {
         case I: // ascii value of I, insert
