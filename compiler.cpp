@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 
-#include <cstring>
 #include <cstdio>
 #include <cstring>
 
@@ -11,7 +10,10 @@
 #include "Utility.h"
 using namespace std;
 
-#define TABLE_SIZE 16
+void cosoleInputOutput();
+void fileInputOutput();
+void showInstruction();
+// #define TABLE_SIZE 16
 
 // ==========================================
 // class containing actual symbole/token info
@@ -66,19 +68,57 @@ class ScopeTable
 public:
     static int tableCount;
     string id;
-    SymbolInfo *hashTable[TABLE_SIZE];
+    // SymbolInfo *hashTable[TABLE_SIZE];
+    SymbolInfo **hashTable;
     ScopeTable *child; // for maintaining child, like next link
     ScopeTable *parent; // for maintaining parent, like prev link
+    int TABLE_SIZE;
 
-    ScopeTable()
-    {
-        for (size_t i = 0; i < TABLE_SIZE; i++)
+    ScopeTable(int n)
+    {  
+        TABLE_SIZE = n;
+        hashTable = new SymbolInfo*[TABLE_SIZE];
+
+        for (int i = 0; i < n; i++)
         {
             hashTable[i] = NULL;
         }
         child = NULL; 
         parent = NULL;
         id = to_string(++tableCount);
+    }
+
+    ScopeTable *getRoot()
+    {
+        ScopeTable *cursor;
+        cursor = this;
+        while (cursor->parent != NULL)
+        {
+            cursor = cursor->parent;
+        }
+        
+        return cursor;
+    }
+
+    string getId()
+    {
+        return id;
+    }
+
+    string getParentId()
+    {
+        ScopeTable *cursor;
+        cursor = getRoot();
+
+        string longId;
+
+        while (cursor != this)
+        {
+            longId += cursor->id + ".";
+            cursor = cursor->child;
+        }
+
+        return longId;
     }
 
     bool insert(SymbolInfo *symbolInfo)
@@ -172,7 +212,7 @@ public:
 
     void print()
     {
-        cout<<"# scope table id = "<< id <<endl;
+        cout<<"# scope table id = "<< getParentId() + getId() <<endl;
         for(int i=0; i<TABLE_SIZE; i++)
         {
             if (hashTable[i] == NULL)
@@ -300,41 +340,39 @@ public:
 
 int main()
 {
-    // =======================================================
-    // ===================== READ FILE =======================
-    // =======================================================
+    int option;
 
-// reading from file
-/*     fstream fin;
-    string filleName;
+    cout<<"# ============ MENU =========="<<endl;
+    cout<<"# Enter '1' for Console Input"<<endl;
+    cout<<"# Enter '2' for File Input"<<endl;
+    cout<<"# Enter '3' for Exit Program"<<endl;
+    cout<<"# ============================"<<endl;
+    cin>> option;
+
+    if(option == 1)
+        cosoleInputOutput();
+    else if (option == 2)
+        fileInputOutput();
+    else if (option == 3)
+        exit(0);
+
+    return 0;
+}
+
+
+// =======================================================
+// ================ Reading From Console =================
+// =======================================================
+void cosoleInputOutput()
+{
+    showInstruction();      
+
+    int m;
+    cin>>m;
+    cin.ignore();
+
     string text;
-
-    cout<<" # Enter file name: ";
-    fflush(stdin);
-    getline(cin, filleName);
-    fin.open(filleName, ios::in);
-
-    int i = 0;
-    while(getline(fin, text))
-    {
-        LineParser<string> parser(text, ' ');
-        auto words = parser.parseLineToString();
-        for(auto word: words)
-            cout<<word;
-        i++;
-    }
-    fin.close();
-    cout<<endl; */
-
-    // =======================================================
-    // ========================== MENU =======================
-    // =======================================================
-
-    string text; 
     int choice;
-
-    int m; // bucket size
-    // cin>>m;
 
     SymbolInfo *symbolInfo = NULL;
 
@@ -342,28 +380,19 @@ int main()
 
     SymbolTable *symbolTable = NULL;
 
-    currentScopeTable = new ScopeTable();
+    currentScopeTable = new ScopeTable(m);
 
     symbolTable = new SymbolTable();
     
     symbolTable->append(currentScopeTable); // appending as 1st node of doubly linked list
 
+    fflush(stdin);
     while(getline(cin, text))
     {
-        
         LineParser<string> parser(text, ' ');
         auto words = parser.parseLineToString();
         choice = to_ascii(words.front());
-        
-        // I for Insert
-        // L for Lookup
-        // D for Delete
-        // P for Print
-        // S for New Scope
-        // E for Exit Current Scope
-        // A for All
-        // C for Current
-        // Q for Quit
+
 
         switch (choice)
         {
@@ -383,10 +412,28 @@ int main()
             string name;
             name = words.at(1);
 
-            string scopeNo = currentScopeTable->id;
+            string scopeNo = currentScopeTable->getParentId() + currentScopeTable->getId();
             if(currentScopeTable->lookup(name) != NULL)
             {
                 cout<<name<<" found in scope table "<< scopeNo <<endl;
+                
+                // resetting currentScope, limiting scope
+                {
+                    ScopeTable *root;
+                    ScopeTable *cursor;
+                    root = cursor = symbolTable->getHead();
+
+                    if(currentScopeTable == root)
+                        break;
+
+                    while (cursor->child != NULL)
+                    {
+                        cursor = cursor->child;
+                    }
+
+                    currentScopeTable = cursor;
+                    cursor->child = NULL;
+                }
                 break;
             }
             cout<<name<<" not found in scope table "<< scopeNo <<endl;
@@ -440,7 +487,7 @@ int main()
         
         case S: // ascii value of S, entering new scope
         {
-            currentScopeTable = new ScopeTable();
+            currentScopeTable = new ScopeTable(m);
             symbolTable->append(currentScopeTable);
 
             break;
@@ -461,6 +508,180 @@ int main()
             }
 
             currentScopeTable = cursor;
+            cursor->child = NULL;
+
+            break;
+        }
+        
+        case Q: // ascii value of Q, quit
+            cout<<"# Quit Program" <<endl;
+            cout<< "~TERMINATED" <<endl;
+            exit(0);
+            break;
+
+        default:
+            break;
+        }
+        
+    }
+}
+
+
+// =======================================================
+// ================= Reading From File ===================
+// =======================================================
+void fileInputOutput()
+{
+    showInstruction();
+    fstream fin;
+    string filleName;
+    string text;
+    int m;
+    int choice;
+
+    cout<<"# Enter file name: ";
+    cin>>filleName;
+
+    fin.open(filleName); // opening file
+    getline(fin, text); // reading first line
+
+    m = atoi(text.c_str()); // extracting m
+
+    SymbolInfo *symbolInfo = NULL;
+
+    ScopeTable *currentScopeTable = NULL;
+
+    SymbolTable *symbolTable = NULL;
+
+    currentScopeTable = new ScopeTable(m);
+
+    symbolTable = new SymbolTable();
+    
+    symbolTable->append(currentScopeTable); // appending as 1st node of doubly linked list
+
+    fflush(stdin);
+    while(getline(fin, text))
+    {
+        LineParser<string> parser(text, ' ');
+        auto words = parser.parseLineToString();
+        choice = to_ascii(words.front());
+
+        switch (choice)
+        {
+        case I: // ascii value of I, insert
+        {
+            string name = words.at(1);
+            string type = words.at(2);
+
+            symbolInfo = new SymbolInfo(name, type);
+            currentScopeTable->insert(symbolInfo);
+            break;
+        }
+        
+        case L: // ascii value of L, lookup
+        {
+        L1: // primitive way
+            string name;
+            name = words.at(1);
+
+            string scopeNo = currentScopeTable->getParentId() + currentScopeTable->getId();
+            if(currentScopeTable->lookup(name) != NULL)
+            {
+                cout<<name<<" found in scope table "<< scopeNo <<endl;
+                
+                // resetting currentScope, limiting scope
+                {
+                    ScopeTable *root;
+                    ScopeTable *cursor;
+                    root = cursor = symbolTable->getHead();
+
+                    if(currentScopeTable == root)
+                        break;
+
+                    while (cursor->child != NULL)
+                    {
+                        cursor = cursor->child;
+                    }
+
+                    currentScopeTable = cursor;
+                    cursor->child = NULL;
+                }
+                break;
+            }
+            cout<<name<<" not found in scope table "<< scopeNo <<endl;
+
+            ScopeTable *root;
+            ScopeTable *cursor;
+            root = cursor = symbolTable->getHead();
+
+            if(currentScopeTable == root)
+                break;
+
+            while (cursor->child != currentScopeTable)
+            {
+                cursor = cursor->child;
+            }
+
+            currentScopeTable = cursor;
+            
+            choice = L;
+            goto L1;
+
+            break;
+        }
+        
+        case D: // ascii value of D, delete
+        {
+            string name;
+            name = words.at(1);
+            if(currentScopeTable->remove(name) == true) 
+                cout<<name<<" DELETED"<<endl;
+            else
+                cout<<name<<" NOT DELETED"<<endl;
+
+            break;
+        }
+        
+        case P: // ascii value of P, print symbol table
+        {
+            string instruction = words.at(1);
+            if (instruction.compare("A") == 0)
+            {
+                symbolTable->printAllScopeTable();
+            }
+            else if (instruction.compare("C") == 0)
+            {
+                currentScopeTable->print();
+            }
+            
+            break;
+        }
+        
+        case S: // ascii value of S, entering new scope
+        {
+            currentScopeTable = new ScopeTable(m);
+            symbolTable->append(currentScopeTable);
+
+            break;
+        }
+        
+        case E: // ascii value of E, entering current scope
+        {
+            ScopeTable *root;
+            ScopeTable *cursor;
+            root = cursor = symbolTable->getHead();
+
+            if(currentScopeTable == root)
+                break;
+
+            while (cursor->child != currentScopeTable)
+            {
+                cursor = cursor->child;
+            }
+
+            currentScopeTable = cursor;
+            cursor->child = NULL;
+
             break;
         }
         
@@ -475,7 +696,18 @@ int main()
         }
         
     }
+}
 
-
-    return 0;
+void showInstruction()
+{
+    cout<<"\t# Instructions"<<endl;
+    cout<<"\tI for Insert"<<endl;
+    cout<<"\tL for Lookup"<<endl;
+    cout<<"\tD for Delete"<<endl;
+    cout<<"\tP for Print"<<endl;
+    cout<<"\tS for New Scope"<<endl;
+    cout<<"\tE for Exit Current Scope"<<endl;
+    cout<<"\tA for All"<<endl;
+    cout<<"\tC for Current"<<endl;
+    cout<<endl;
 }

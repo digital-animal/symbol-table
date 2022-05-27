@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 
+// size_t TABLE_SIZE = 16;
+
 enum Choice {
     I = 73,
     L = 76,
@@ -10,7 +12,8 @@ enum Choice {
     E = 69,
     A = 65,
     C = 67,
-    Q = 81
+    Q = 81,
+    R = 82
 };
 
 int to_ascii(string text)
