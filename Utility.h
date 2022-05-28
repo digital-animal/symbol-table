@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <fstream>
 
 // size_t TABLE_SIZE = 16;
 
@@ -47,4 +48,15 @@ int hashf(string key, int m)
     return sdbmHash(key) % m;
 }
 
-
+vector<string> tokenizeText(string text)
+{
+    stringstream ss(text);
+    vector<string> words;
+    string word;
+    int count = 0;
+    while (ss >> word)
+    {
+        words.push_back(word);
+    }
+    return words;
+}
