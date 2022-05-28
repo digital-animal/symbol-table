@@ -14,7 +14,9 @@ enum Choice {
     A = 65,
     C = 67,
     Q = 81,
-    R = 82
+    R = 82,
+    NEWLINE = 10,
+    SPACE = 32
 };
 
 int to_ascii(string text)

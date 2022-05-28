@@ -11,7 +11,7 @@
 using namespace std;
 
 void cosoleInputOutput();
-void fileInputOutput();
+void fileInputOutput(string);
 void showInstruction();
 // #define TABLE_SIZE 16
 
@@ -333,28 +333,25 @@ public:
             cursor->print();
             cursor = cursor->child;
         }
-        // pass
     }
-    // pass
 };
 
-int main()
+
+// =======================================================
+// ==================== Main Function ====================
+// =======================================================
+int main(int argc, char const *argv[])
 {
-    int option;
 
-    cout<<"# ============ MENU =========="<<endl;
-    cout<<"# Enter '1' for Console Input"<<endl;
-    cout<<"# Enter '2' for File Input"<<endl;
-    cout<<"# Enter '3' for Exit Program"<<endl;
-    cout<<"# ============================"<<endl;
-    cin>> option;
-
-    if(option == 1)
+    if(argc == 1)
+    {
         cosoleInputOutput();
-    else if (option == 2)
-        fileInputOutput();
-    else if (option == 3)
-        exit(0);
+    }
+    else if(argc == 2)
+    {
+        string fileName = argv[1];
+        fileInputOutput(fileName);
+    }
 
     return 0;
 }
@@ -365,7 +362,7 @@ int main()
 // =======================================================
 void cosoleInputOutput()
 {
-    showInstruction();      
+    // showInstruction();      
 
     int m;
     cin>>m;
@@ -375,15 +372,11 @@ void cosoleInputOutput()
     int choice;
 
     SymbolInfo *symbolInfo = NULL;
-
     ScopeTable *currentScopeTable = NULL;
-
     SymbolTable *symbolTable = NULL;
 
     currentScopeTable = new ScopeTable(m);
-
     symbolTable = new SymbolTable();
-    
     symbolTable->append(currentScopeTable); // appending as 1st node of doubly linked list
 
     fflush(stdin);
@@ -517,7 +510,11 @@ void cosoleInputOutput()
             cout<< "~TERMINATED" <<endl;
             exit(0);
             break;
-
+            
+        case NEWLINE:
+        case SPACE:
+            continue;
+            
         default:
             break;
         }
@@ -529,40 +526,41 @@ void cosoleInputOutput()
 // =======================================================
 // ================= Reading From File ===================
 // =======================================================
-void fileInputOutput()
+void fileInputOutput(string path)
 {
     showInstruction();
     fstream fin;
-    string filleName;
+    string filleName = path;
     string text;
-    int m;
     int choice;
 
-    cout<<"# Enter file name: ";
-    cin>>filleName;
+    filleName = path;
 
     fin.open(filleName); // opening file
     getline(fin, text); // reading first line
 
-    m = atoi(text.c_str()); // extracting m
+    int m;
+    // m = atoi(text.c_str()); // extracting m
+    m = stoi(text); // extracting m
 
     SymbolInfo *symbolInfo = NULL;
-
     ScopeTable *currentScopeTable = NULL;
-
     SymbolTable *symbolTable = NULL;
 
     currentScopeTable = new ScopeTable(m);
-
     symbolTable = new SymbolTable();
-    
     symbolTable->append(currentScopeTable); // appending as 1st node of doubly linked list
 
-    fflush(stdin);
     while(getline(fin, text))
     {
-        LineParser<string> parser(text, ' ');
-        auto words = parser.parseLineToString();
+        vector<string> words;
+
+        stringstream ss(text);
+        string word;
+        while (ss >> word)
+        {
+            words.push_back(word);
+        }
         choice = to_ascii(words.front());
 
         switch (choice)
@@ -689,11 +687,14 @@ void fileInputOutput()
             cout<< "~TERMINATED" <<endl;
             exit(0);
             break;
+            
+        case NEWLINE:
+        case SPACE:
+            continue;
         
         default:
             break;
         }
-        
     }
 }
 
