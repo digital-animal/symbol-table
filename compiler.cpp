@@ -155,35 +155,42 @@ public:
 
     bool insert(SymbolInfo *symbolInfo)
     {
-        string key = symbolInfo->getName();
-        int index = hashf(key, TABLE_SIZE);
+        string symbolName = symbolInfo->getName();
+        int index = hashf(symbolName, TABLE_SIZE);
 
         if(hashTable[index] == NULL) 
         {
             symbolInfo->next = hashTable[index];
             hashTable[index] = symbolInfo;
 
+
             string scopeNo = getId();
             cout<<"Inserted in ScopeTable #"<< scopeNo <<" at position "<< index <<", 0"<<endl;
         
+            return true;
         }
         else
         {
             int chainNo = 0;
             SymbolInfo *cursor; 
-            cursor = hashTable[index]; 
+            cursor = hashTable[index]; // getting the head of the current chain
             while (cursor->next != NULL)
             {
+                string currentName = cursor->getName();
+                if(currentName.compare(symbolName) == 0)
+                {
+                    cout<< symbolName <<" already exists in current ScopeTable"<<endl;
+            
+                    return false;
+                }
                 cursor = cursor->next;
                 chainNo++;
             }
             cursor->next = symbolInfo;
             string scopeNo = getId();
             cout<<"Inserted in ScopeTable #"<< scopeNo <<" at position "<< index <<", "<< chainNo <<endl;
-        
+            return true;
         }
-
-        return true;
     }
 
     SymbolInfo *lookup(string name)
@@ -345,7 +352,7 @@ public:
         return cursor;
     }
 
-    void append(ScopeTable *newNode)
+    void append(ScopeTable *newNode) // appedning new ScopeTable at the tail of doubly linked list (SymbolTable)
     {   
         int length;
 
@@ -469,6 +476,7 @@ public:
 
     ScopeTable *resetCurrentScopeTable()
     {
+        // pass
         return NULL;
     }
 
@@ -539,6 +547,7 @@ int main(int argc, char const *argv[])
         {
             string name = words.at(1);
             string type = words.at(2);
+            if(currentScopeTable->lookup(name) != NULL) break;
 
             symbolInfo = new SymbolInfo(name, type);
             currentScopeTable->insert(symbolInfo);
